@@ -155,7 +155,7 @@
     }
 
     function atualizarPainel() {
-      fetch("http://192.168.4.1/dados")
+fetch("http://192.168.1.19/dados")
         .then(resp => resp.json())
         .then(data => {
           document.getElementById("velocidade").textContent = data.velocidade ?? "0";
