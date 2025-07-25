@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Painel Renault Scénic</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      background: black;
+      overflow: hidden;
+      height: 100%;
+      width: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      user-select: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #painel {
+      position: relative;
+      width: 900px;
+      height: 480px;
+      background: url("painel.jpg") no-repeat center center;
+      background-size: contain;
+      box-shadow: 0 0 20px #00ffff;
+      z-index: 0;
+    }
+
+    #velocidade {
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 64px;
+      font-weight: bold;
+      text-shadow: 2px 2px 8px black;
+    }
+
+    #hodometro {
+      position: absolute;
+      top: 65%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 20px;
+      font-weight: bold;
+      text-shadow: 2px 2px 6px black;
+    }
+
+    #tempDigital {
+      position: absolute;
+      top: 40%;
+      left: 88%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 2px 2px 6px black;
+      color: white;
+      z-index: 10;
+    }
+
+    /* Barra curva */
+    #barrasCurvas {
+      position: absolute;
+      top: 50%;
+      left: 70%;
+      width: 90px;
+      height: 90px;
+      pointer-events: none;
+    }
+
+    .barra {
+      position: absolute;
+      width: 28px;
+      height: 7px;
+      background-color: #222;
+      border-radius: 3px;
+      transition: background-color 0.3s;
+    }
+
+    .branca { background-color: white; }
+    .vermelha { background-color: red; }
+
+    /* Luzes */
+    .luz-icone {
+      position: absolute;
+      font-size: 14px;
+      padding: 4px 6px;
+      background-color: rgba(30,30,30,0.7);
+      border-radius: 6px;
+      border: 1.5px solid #555;
+      user-select: none;
+      transition: opacity 0.3s ease;
+      font-weight: bold;
+      text-align: center;
+      opacity: 1;
+    }
+
+    #luzOleo     { top: 78%; left: 78%; color: red;      border-color: #ff3b3b; }
+    #bateria     { top: 78%; left: 9%;  color: red;      border-color: #ff3b3b; }
+    #freioMao    { top: 78%; left: 17%; color: red;      border-color: #ff3b3b; }
+    #injecao     { top: 73%; left: 46%; color: #ffea3b;  border-color: #ffea3b; }
+    #luzAlta     { top: 17%; left: 47%; color: #3b94ff;  border-color: #3b94ff; }
+    #tempAlta    { top: 78%; left: 85%; color: #ff3b3b;  border-color: #ff3b3b; }
+
+    /* Setas como luzes */
+    #setaEsquerda { top: 29%; left: 25%; color: #00ff00; border-color: #00ff00; }
+    #setaDireita  { top: 29%; left: 71%; color: #00ff00; border-color: #00ff00; }
+  </style>
+</head>
+<body>
+  <div id="painel">
+    <div id="velocidade">0</div>
+    <div id="hodometro">245000 km</div>
+
+    <!-- Setas como luzes -->
+    <div id="setaEsquerda" class="luz-icone">←</div>
+    <div id="setaDireita" class="luz-icone">→</div>
+
+    <div id="tempDigital">--°C</div>
+
+    <!-- Luzes padrão -->
+    <div id="luzOleo" class="luz-icone">Óleo</div>
+    <div id="bateria" class="luz-icone">Bateria</div>
+    <div id="freioMao" class="luz-icone">Freio</div>
+    <div id="injecao" class="luz-icone">Injeção</div>
+    <div id="luzAlta" class="luz-icone">Alta</div>
+    <div id="tempAlta" class="luz-icone">Temp</div>
+
+    <div id="barrasCurvas"></div>
+  </div>
+
+  <script>
+    const container = document.getElementById("barrasCurvas");
+    const totalBarras = 10;
+    const anguloInicial = -67;
+    const anguloFinal = 67;
+    const raio = 200;
+
+    const barras = [];
+
+    for (let i = 0; i < totalBarras; i++) {
+      const angulo = anguloInicial + (i * (anguloFinal - anguloInicial) / (totalBarras - 1));
+      const rad = angulo * (Math.PI / 800);
+      const x = raio * Math.cos(rad);
+      const y = raio * Math.sin(rad);
+
+      const barra = document.createElement("div");
+      barra.classList.add("barra");
+      barra.style.left = `${-20 + x}px`;
+      barra.style.top = `${65 - y}px`;
+
+      container.appendChild(barra);
+      barras.push(barra);
+    }
+
+    function atualizarBarras(temp) {
+      barras.forEach((barra, i) => {
+        const limite = 60 + i * 5;
+        if (temp >= limite) {
+          if (i < 7) {
+            barra.classList.add("branca");
+            barra.classList.remove("vermelha");
+          } else {
+            barra.classList.add("vermelha");
+            barra.classList.remove("branca");
+          }
+        } else {
+          barra.classList.remove("branca", "vermelha");
+        }
+      });
+      document.getElementById("tempDigital").innerText = `${temp.toFixed(1)}°C`;
+    }
+
+    function atualizarPainel() {
+      fetch("/dados")
+        .then(resp => resp.json())
+        .then(data => {
+          document.getElementById("velocidade").textContent = data.velocidade ?? "0";
+          document.getElementById("hodometro").textContent = data.hodometro + " km";
+
+          atualizarBarras(data.temperatura);
+
+          // Atualiza todas as luzes, inclusive setas
+          const luzes = [
+            "luzOleo", "bateria", "freioMao", "injecao",
+            "luzAlta", "tempAlta", "setaEsquerda", "setaDireita"
+          ];
+          luzes.forEach(id => {
+            document.getElementById(id).style.opacity = data[id] ? "1" : "0";
+          });
+        })
+        .catch(e => console.log("Erro fetch dados:", e));
+    }
+
+    setInterval(atualizarPainel, 1000);
+    atualizarPainel();
+  </script>
+</body>
+</html>
