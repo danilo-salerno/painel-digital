@@ -197,5 +197,55 @@
     setInterval(atualizarPainel, 1000);
     atualizarPainel();
   </script>
+  <script>
+  // === ATIVAR GPS PARA VELOCIDADE ===
+  if ('geolocation' in navigator) {
+    navigator.geolocation.watchPosition(
+      (position) => {
+        const speedMs = position.coords.speed;
+        if (speedMs !== null) {
+          const speedKmh = speedMs * 3.6;
+          document.getElementById("velocidade").innerText = speedKmh.toFixed(0);
+        } else {
+          document.getElementById("velocidade").innerText = "--";
+        }
+      },
+      (error) => {
+        console.warn("Erro ao obter localização:", error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 5000
+      }
+    );
+  } else {
+    alert("Geolocalização não suportada no seu navegador.");
+  }
+
+  // === SUA FUNÇÃO EXISTENTE ===
+  function atualizarPainel() {
+    fetch("/dados")
+      .then(resp => resp.json())
+      .then(data => {
+        document.getElementById("hodometro").textContent = data.hodometro + " km";
+        atualizarBarras(data.temperatura);
+
+        // Atualizar luzes
+        const luzes = ["luzOleo", "bateria", "freioMao", "injecao", "luzAlta", "tempAlta"];
+        luzes.forEach(id => {
+          document.getElementById(id).style.opacity = data[id] ? "1" : "0";
+        });
+
+        // Atualizar setas
+        document.getElementById("setaEsquerda").style.opacity = data.setaEsquerda ? "1" : "0";
+        document.getElementById("setaDireita").style.opacity = data.setaDireita ? "1" : "0";
+      })
+      .catch(e => console.log("Erro fetch dados:", e));
+  }
+
+  setInterval(atualizarPainel, 1000);
+  atualizarPainel();
+</script>
 </body>
 </html>
