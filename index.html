@@ -27,7 +27,6 @@
       box-shadow: 0 0 20px #00ffff;
       z-index: 0;
     }
-
     #velocidade {
       position: absolute;
       top: 45%;
@@ -37,7 +36,6 @@
       font-weight: bold;
       text-shadow: 2px 2px 8px black;
     }
-
     #hodometro {
       position: absolute;
       top: 65%;
@@ -47,7 +45,6 @@
       font-weight: bold;
       text-shadow: 2px 2px 6px black;
     }
-
     #tempDigital {
       position: absolute;
       top: 40%;
@@ -59,8 +56,6 @@
       color: white;
       z-index: 10;
     }
-
-    /* Barra curva */
     #barrasCurvas {
       position: absolute;
       top: 50%;
@@ -69,7 +64,6 @@
       height: 90px;
       pointer-events: none;
     }
-
     .barra {
       position: absolute;
       width: 28px;
@@ -78,11 +72,8 @@
       border-radius: 3px;
       transition: background-color 0.3s;
     }
-
     .branca { background-color: white; }
     .vermelha { background-color: red; }
-
-    /* Luzes */
     .luz-icone {
       position: absolute;
       font-size: 14px;
@@ -96,15 +87,12 @@
       text-align: center;
       opacity: 0;
     }
-
     #luzOleo     { top: 78%; left: 78%; color: red;      border-color: #ff3b3b; }
     #bateria     { top: 78%; left: 9%;  color: red;      border-color: #ff3b3b; }
     #freioMao    { top: 78%; left: 17%; color: red;      border-color: #ff3b3b; }
     #injecao     { top: 73%; left: 46%; color: #ffea3b;  border-color: #ffea3b; }
     #luzAlta     { top: 17%; left: 47%; color: #3b94ff;  border-color: #3b94ff; }
     #tempAlta    { top: 78%; left: 85%; color: #ff3b3b;  border-color: #ff3b3b; }
-
-    /* Setas como luzes */
     #setaEsquerda { top: 29%; left: 25%; color: #00ff00; border-color: #00ff00; }
     #setaDireita  { top: 29%; left: 71%; color: #00ff00; border-color: #00ff00; }
   </style>
@@ -113,21 +101,15 @@
   <div id="painel">
     <div id="velocidade">0</div>
     <div id="hodometro">245000 km</div>
-
-    <!-- Setas como luzes -->
+    <div id="tempDigital">--°C</div>
     <div id="setaEsquerda" class="luz-icone">←</div>
     <div id="setaDireita" class="luz-icone">→</div>
-
-    <div id="tempDigital">--°C</div>
-
-    <!-- Luzes padrão -->
     <div id="luzOleo" class="luz-icone">Óleo</div>
     <div id="bateria" class="luz-icone">Bateria</div>
     <div id="freioMao" class="luz-icone">Freio</div>
     <div id="injecao" class="luz-icone">Injeção</div>
     <div id="luzAlta" class="luz-icone">Alta</div>
     <div id="tempAlta" class="luz-icone">Temp</div>
-
     <div id="barrasCurvas"></div>
   </div>
 
@@ -137,7 +119,6 @@
     const anguloInicial = -67;
     const anguloFinal = 67;
     const raio = 200;
-
     const barras = [];
 
     for (let i = 0; i < totalBarras; i++) {
@@ -174,15 +155,13 @@
     }
 
     function atualizarPainel() {
-      fetch("/dados")
+      fetch("http://192.168.4.1/dados")
         .then(resp => resp.json())
         .then(data => {
           document.getElementById("velocidade").textContent = data.velocidade ?? "0";
           document.getElementById("hodometro").textContent = data.hodometro + " km";
-
           atualizarBarras(data.temperatura);
 
-          // Atualiza todas as luzes, inclusive setas
           const luzes = [
             "luzOleo", "bateria", "freioMao", "injecao",
             "luzAlta", "tempAlta", "setaEsquerda", "setaDireita"
@@ -197,55 +176,5 @@
     setInterval(atualizarPainel, 1000);
     atualizarPainel();
   </script>
-  <script>
-  // === ATIVAR GPS PARA VELOCIDADE ===
-  if ('geolocation' in navigator) {
-    navigator.geolocation.watchPosition(
-      (position) => {
-        const speedMs = position.coords.speed;
-        if (speedMs !== null) {
-          const speedKmh = speedMs * 3.6;
-          document.getElementById("velocidade").innerText = speedKmh.toFixed(0);
-        } else {
-          document.getElementById("velocidade").innerText = "--";
-        }
-      },
-      (error) => {
-        console.warn("Erro ao obter localização:", error.message);
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 1000
-      }
-    );
-  } else {
-    alert("Geolocalização não suportada no seu navegador.");
-  }
-
-  // === SUA FUNÇÃO EXISTENTE ===
-  function atualizarPainel() {
-    fetch("http://192.168.4.1/dados")
-      .then(resp => resp.json())
-      .then(data => {
-        document.getElementById("hodometro").textContent = data.hodometro + " km";
-        atualizarBarras(data.temperatura);
-
-        // Atualizar luzes
-        const luzes = ["luzOleo", "bateria", "freioMao", "injecao", "luzAlta", "tempAlta"];
-        luzes.forEach(id => {
-          document.getElementById(id).style.opacity = data[id] ? "1" : "0";
-        });
-
-        // Atualizar setas
-        document.getElementById("setaEsquerda").style.opacity = data.setaEsquerda ? "1" : "0";
-        document.getElementById("setaDireita").style.opacity = data.setaDireita ? "1" : "0";
-      })
-      .catch(e => console.log("Erro fetch dados:", e));
-  }
-
-  setInterval(atualizarPainel, 1000);
-  atualizarPainel();
-</script>
 </body>
 </html>
